@@ -31,5 +31,9 @@ public interface Dict<T, V> {
 	 */
 	void fromJson(boolean replace, JsonObject entries) throws SyntaxError;
 
+	/**
+	 * Serialize a dict to JSON.
+	 * @return A JsonObject with two keys: one boolean "replace" with a value of false, and one object "values" containing ID to serialized V pairs.
+	 */
 	JsonObject toJson();
 }
