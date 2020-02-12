@@ -19,11 +19,13 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class DictManager {
-	public static final DictManager INSTANCE = new DictManager();
+	public static final DictManager DATA_PACK = new DictManager();
+//	public static final DictManager STATIC_DATA = new DictManager(); //TODO: NYI
 
-	public Map<String, Map<Identifier, Dict<?, ?>>> DICTS = new HashMap<>();
-	public Map<String, DictInfo<?>> DICT_TYPES = new HashMap<>();
-	public List<Function<Jankson.Builder, Jankson.Builder>> JKSON_FACTORY = new ArrayList<>();
+	public static final Map<String, DictInfo<?>> DICT_TYPES = new HashMap<>();
+	public static final List<Function<Jankson.Builder, Jankson.Builder>> FACTORIES = new ArrayList<>();
+
+	public Map<String, Map<Identifier, Dict<?, ?>>> dicts = new HashMap<>();
 
 	private DictManager() {
 		registerDictType("blocks", Registry.BLOCK, BlockTags::getContainer);
@@ -39,11 +41,12 @@ public class DictManager {
 	 * @param tagContainer The tag container which tags for entries in this dict type are stored in.
 	 * @param <T> The type of registered object this dict will support.
 	 */
-	public <T> void registerDictType(String subfolder, Registry<T> registry, Supplier<TagContainer<T>> tagContainer) {
+	public static <T> void registerDictType(String subfolder, Registry<T> registry, Supplier<TagContainer<T>> tagContainer) {
 		if (DICT_TYPES.containsKey(subfolder)) {
 			MCDict.logger.error("[MCDict] Could not register dict type {} as it already exists", subfolder);
 		}
-		DICTS.put(subfolder, new HashMap<>());
+		DATA_PACK.dicts.put(subfolder, new HashMap<>());
+//		STATIC_DATA.dicts.put(subfolder, new HashMap<>());
 		DICT_TYPES.put(subfolder, new DictInfo<>(registry, tagContainer));
 	}
 
@@ -51,8 +54,8 @@ public class DictManager {
 	 * Add custom type serializers and deserializers for dicts to use.
 	 * @param factory A function that takes the passed Jankson builder, adds your serializers and deserializers, and returns the same Jankson builder.
 	 */
-	public void appendValueType(Function<Jankson.Builder, Jankson.Builder> factory) {
-		JKSON_FACTORY.add(factory);
+	public static void addValueFactory(Function<Jankson.Builder, Jankson.Builder> factory) {
+		FACTORIES.add(factory);
 	}
 
 	/**
@@ -69,24 +72,40 @@ public class DictManager {
 	public <T, V> Dict<T, V> registerDict(Identifier id, String type, Class<V> valueType) {
 		if (DICT_TYPES.containsKey(type)) {
 			DictInfo<T> info = (DictInfo<T>) DICT_TYPES.get(type);
-			//TODO: more fastutil-like dict types? is it even worth it? It gets cast right back to a Dict anyway...
-			if (DICTS.get(type).containsKey(id)) {
+			if (dicts.get(type).containsKey(id)) {
 				MCDict.logger.error("[MCDict] Could not register dict {}, as it already exists for dict type {}", id.toString(), type);
 				return null;
 			}
+			//TODO: more fastutil-like dict types? is it even worth it? It gets cast right back to a Dict anyway...
 			if (valueType == Integer.class) {
 				IntDict<T> ret = new IntDict<>(id, info.registry, info.container);
-				DICTS.get(type).put(id, ret);
+				dicts.get(type).put(id, ret);
 				return (Dict<T, V>) ret;
 			} else {
 				SimpleDict<T, V> ret = new SimpleDict<>(id, valueType, info.registry, info.container);
-				DICTS.get(type).put(id, ret);
+				dicts.get(type).put(id, ret);
 				return ret;
 			}
 		} else {
 			MCDict.logger.error("[MCDict] Could not register dict {}, as class {} does not have a dict type", id.toString(), type);
 			return null;
 		}
+	}
+
+	public <V> Dict<Block, V> registerBlockDict(Identifier id, Class<V> valueType) {
+		return registerDict(id, "blocks", valueType);
+	}
+
+	public <V> Dict<Item, V> registerItemDict(Identifier id, Class<V> valueType) {
+		return registerDict(id, "items", valueType);
+	}
+
+	public <V> Dict<Fluid, V> registerFluidDict(Identifier id, Class<V> valueType) {
+		return registerDict(id, "fluids", valueType);
+	}
+
+	public <V> Dict<EntityType<?>, V> registerEntityTypeDict(Identifier id, Class<V> valueType) {
+		return registerDict(id, "entity_types", valueType);
 	}
 
 	/**
@@ -101,10 +120,10 @@ public class DictManager {
 	@Nullable
 	@SuppressWarnings("unchecked")
 	public <T, V> Dict<T, V> getDict(String type, Class<V> valueType, Identifier id) {
-		if (!DICTS.containsKey(type)) {
+		if (!dicts.containsKey(type)) {
 			return null;
 		}
-		Map<Identifier, Dict<?, ?>> dictMap = DICTS.get(type);
+		Map<Identifier, Dict<?, ?>> dictMap = dicts.get(type);
 		Dict<?, ?> ret = dictMap.get(id);
 		if (ret.getType() == valueType) return (Dict<T, V>) ret;
 		else return null;

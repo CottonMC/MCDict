@@ -1,14 +1,14 @@
 {
   "schemaVersion": 1,
-  "id": "starter",
+  "id": "mcdict",
   "version": "${version}",
 
-  "name": "Fabric Starter",
-  "icon": "assets/starter/icon.png",
-  "description": "Template for starting out Fabric mods",
+  "name": "MCDict",
+  "icon": "assets/mcdict/icon.png",
+  "description": "Data-driven key/value storage for Minecraft",
   "license": "MIT",
   "contact": {
-    "sources": "https://github.com/CottonMC/FabricStarter"
+    "sources": "https://github.com/CottonMC/MCDict"
   },
   "environment": "*",
   "entrypoints": {
@@ -16,11 +16,9 @@
       "io.github.cottonmc.mcdict.MCDict"
     ]
   },
-  "mixins": [
-    "mixins.starter.json"
-  ],
   "depends": {
-    "fabricloader": ">=0.4.0"
+    "fabricloader": ">=0.4.0",
+    "jankson-fabric": "*"
   },
   "custom": {
     "modmenu:api": true

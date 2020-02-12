@@ -1,7 +1,0 @@
-{
-  "required": true,
-  "package": "io.github.cottonmc.mcdict.mixin",
-  "compatibilityLevel": "JAVA_8",
-  "mixins": [
-  ]
-}
