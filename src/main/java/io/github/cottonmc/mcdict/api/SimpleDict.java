@@ -1,6 +1,5 @@
 package io.github.cottonmc.mcdict.api;
 
-import blue.endless.jankson.JsonElement;
 import blue.endless.jankson.JsonObject;
 import blue.endless.jankson.JsonPrimitive;
 import blue.endless.jankson.api.SyntaxError;
@@ -13,20 +12,34 @@ import net.minecraft.util.registry.Registry;
 import java.util.*;
 import java.util.function.Supplier;
 
-public abstract class SimpleDict<T, V> implements Dict<T, V> {
+public class SimpleDict<T, V> implements Dict<T, V> {
 	private final Identifier id;
+	private final Class<V> type;
 	private final Map<T, V> values;
-	private Registry<T> registry;
-	private Supplier<TagContainer<T>> container;
+	protected Registry<T> registry;
+	protected Supplier<TagContainer<T>> container;
 
-	public SimpleDict(Identifier id, Registry<T> registry, Supplier<TagContainer<T>> container) {
+	public SimpleDict(Identifier id, Class<V> type, Registry<T> registry, Supplier<TagContainer<T>> container) {
 		this.id = id;
+		this.type = type;
+		this.registry = registry;
+		this.container = container;
 		this.values = new HashMap<>();
+	}
+
+	@Override
+	public void clear() {
+		values().clear();
 	}
 
 	@Override
 	public boolean contains(T entry) {
 		return values.containsKey(entry);
+	}
+
+	@Override
+	public Class<V> getType() {
+		return type;
 	}
 
 	@Override
@@ -58,25 +71,31 @@ public abstract class SimpleDict<T, V> implements Dict<T, V> {
 	@Override
 	public Tag<T> toTag() {
 		Identifier newId = new Identifier(id.getNamespace(), "dict/" + id.getPath());
-		return new Tag<>(newId, Collections.singleton(new Tag.CollectionEntry<>(values.keySet())), false);
+		return new Tag<>(newId, Collections.singleton(new Tag.CollectionEntry<>(values().keySet())), false);
 	}
 
+	//TODO: libcd condition support?
 	@Override
-	public void fromJson(boolean replace, JsonObject entries) throws SyntaxError {
-		if (replace) values.clear();
+	public void fromJson(boolean replace, boolean override, JsonObject entries) throws SyntaxError {
+		Map<T, V> vals = values();
+		if (replace) vals.clear();
 		for (String key : entries.keySet()) {
-			JsonElement value = entries.get(key);
+			V value = entries.get(type, key);
+			if (value == null) {
+				throw new SyntaxError("Dict value for entry " + key + " could not be parsed into type " + type.getName());
+			}
 			if (key.indexOf('#') == 0) {
 				Tag<T> tag = container.get().get(new Identifier(key.substring(1)));
 				if (tag == null) throw new SyntaxError("Dict references tag " + key + " that does not exist");
-				V val = readValue(value);
 				for (T t : tag.values()) {
-					values.put(t, val);
+					if (!vals.containsKey(t) || override) vals.put(t, value);
 				}
+			} else {
+				Optional<T> entry = registry.getOrEmpty(new Identifier(key));
+				if (!entry.isPresent())
+					throw new SyntaxError("Dict references registered object " + key + " that does not exist");
+				if (!vals.containsKey(entry.get()) || override) vals.put(entry.get(), value);
 			}
-			Optional<T> entry = registry.getOrEmpty(new Identifier(key));
-			if (!entry.isPresent()) throw new SyntaxError("Dict references registered object " + key + " that does not exist");
-			values.put(entry.get(), readValue(value));
 		}
 	}
 
@@ -85,13 +104,11 @@ public abstract class SimpleDict<T, V> implements Dict<T, V> {
 		JsonObject json = new JsonObject();
 		json.put("replace", new JsonPrimitive(false));
 		JsonObject vals = new JsonObject();
-		for (T t : values.keySet()) {
-			vals.put(registry.getId(t).toString(), writeValue(values.get(t)));
+		for (T t : values().keySet()) {
+			vals.putDefault(registry.getId(t).toString(), values.get(t), type, null);
 		}
 		json.put("values", vals);
 		return json;
 	}
 
-	abstract V readValue(JsonElement json) throws SyntaxError;
-	abstract JsonElement writeValue(V v);
 }
