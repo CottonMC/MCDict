@@ -3,10 +3,10 @@ package io.github.cottonmc.mcdict.api;
 import blue.endless.jankson.Jankson;
 import io.github.cottonmc.mcdict.MCDict;
 import net.minecraft.block.Block;
-import net.minecraft.entity.Entity;
+import net.minecraft.entity.EntityType;
 import net.minecraft.fluid.Fluid;
 import net.minecraft.item.Item;
-import net.minecraft.tag.TagContainer;
+import net.minecraft.tag.*;
 import net.minecraft.util.Identifier;
 import net.minecraft.util.registry.Registry;
 
@@ -21,20 +21,30 @@ import java.util.function.Supplier;
 public class DictManager {
 	public static final DictManager INSTANCE = new DictManager();
 
-	public Map<Class<?>, Map<Identifier, Dict<?, ?>>> DICTS = new HashMap<>();
-	public Map<Class<?>, DictInfo<?>> DICT_TYPES = new HashMap<>();
+	public Map<String, Map<Identifier, Dict<?, ?>>> DICTS = new HashMap<>();
+	public Map<String, DictInfo<?>> DICT_TYPES = new HashMap<>();
 	public List<Function<Jankson.Builder, Jankson.Builder>> JKSON_FACTORY = new ArrayList<>();
+
+	private DictManager() {
+		registerDictType("blocks", Registry.BLOCK, BlockTags::getContainer);
+		registerDictType("items", Registry.ITEM, ItemTags::getContainer);
+		registerDictType("fluids", Registry.FLUID, FluidTags::getContainer);
+		registerDictType("entity_types", Registry.ENTITY_TYPE, EntityTypeTags::getContainer);
+	}
 
 	/**
 	 * Register a new type of dict. based on a class of registered object.
-	 * @param type The class entries in this dict type will be.
+	 * @param subfolder The subfolder in the `dicts` folder this type will belong to.
 	 * @param registry The registry which entries in this dict type are registered to.
 	 * @param tagContainer The tag container which tags for entries in this dict type are stored in.
 	 * @param <T> The type of registered object this dict will support.
 	 */
-	public <T> void registerDictType(Class<T> type, Registry<T> registry, Supplier<TagContainer<T>> tagContainer) {
-		DICTS.put(type, new HashMap<>());
-		DICT_TYPES.put(type, new DictInfo<>(registry, tagContainer));
+	public <T> void registerDictType(String subfolder, Registry<T> registry, Supplier<TagContainer<T>> tagContainer) {
+		if (DICT_TYPES.containsKey(subfolder)) {
+			MCDict.logger.error("[MCDict] Could not register dict type {} as it already exists", subfolder);
+		}
+		DICTS.put(subfolder, new HashMap<>());
+		DICT_TYPES.put(subfolder, new DictInfo<>(registry, tagContainer));
 	}
 
 	/**
@@ -56,12 +66,12 @@ public class DictManager {
 	 */
 	@Nullable
 	@SuppressWarnings("unchecked")
-	public <T, V> Dict<T, V> registerDict(Identifier id, Class<T> type, Class<V> valueType) {
+	public <T, V> Dict<T, V> registerDict(Identifier id, String type, Class<V> valueType) {
 		if (DICT_TYPES.containsKey(type)) {
 			DictInfo<T> info = (DictInfo<T>) DICT_TYPES.get(type);
 			//TODO: more fastutil-like dict types? is it even worth it? It gets cast right back to a Dict anyway...
 			if (DICTS.get(type).containsKey(id)) {
-				MCDict.logger.error("[MCDict] Could not register dict {}, as it already exists for dict type {}", id.toString(), type.getName());
+				MCDict.logger.error("[MCDict] Could not register dict {}, as it already exists for dict type {}", id.toString(), type);
 				return null;
 			}
 			if (valueType == Integer.class) {
@@ -74,7 +84,7 @@ public class DictManager {
 				return ret;
 			}
 		} else {
-			MCDict.logger.error("[MCDict] Could not register dict {}, as class {} does not have a dict type", id.toString(), type.getName());
+			MCDict.logger.error("[MCDict] Could not register dict {}, as class {} does not have a dict type", id.toString(), type);
 			return null;
 		}
 	}
@@ -90,7 +100,7 @@ public class DictManager {
 	 */
 	@Nullable
 	@SuppressWarnings("unchecked")
-	public <T, V> Dict<T, V> getDict(Class<T> type, Class<V> valueType, Identifier id) {
+	public <T, V> Dict<T, V> getDict(String type, Class<V> valueType, Identifier id) {
 		if (!DICTS.containsKey(type)) {
 			return null;
 		}
@@ -109,11 +119,11 @@ public class DictManager {
 	 */
 	@Nullable
 	public <V> Dict<Block, V> getBlockDict(Class<V> valueType, Identifier id) {
-		return getDict(Block.class, valueType, id);
+		return getDict("blocks", valueType, id);
 	}
 
 	/**
-	 * Get a item dict.
+	 * Get an item dict.
 	 * @param valueType The class of value to get a dict for.
 	 * @param id The ID of the dict to get.
 	 * @param <V> The type of value stored in the dict you want.
@@ -121,7 +131,7 @@ public class DictManager {
 	 */
 	@Nullable
 	public <V> Dict<Item, V> getItemDict(Class<V> valueType, Identifier id) {
-		return getDict(Item.class, valueType, id);
+		return getDict("items", valueType, id);
 	}
 
 	/**
@@ -132,18 +142,18 @@ public class DictManager {
 	 * @return The fluid dict of the specified ID and value type, or null if it doesn't exist.
 	 */
 	public <V> Dict<Fluid, V> getFluidDict(Class<V> valueType, Identifier id) {
-		return getDict(Fluid.class, valueType, id);
+		return getDict("fluids", valueType, id);
 	}
 
 	/**
-	 * Get a entity dict.
+	 * Get an entity type dict.
 	 * @param valueType The class of value to get a dict for.
 	 * @param id The ID of the dict to get.
 	 * @param <V> The type of value stored in the dict you want.
-	 * @return The entity dict of the specified ID and value type, or null if it doesn't exist.
+	 * @return The entity type dict of the specified ID and value type, or null if it doesn't exist.
 	 */
-	public <V> Dict<Entity, V> getEntityDict(Class<V> valueType, Identifier id) {
-		return getDict(Entity.class, valueType, id);
+	public <V> Dict<EntityType<?>, V> getEntityTypeDict(Class<V> valueType, Identifier id) {
+		return getDict("entity_types", valueType, id);
 	}
 
 	/**
