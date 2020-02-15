@@ -2,6 +2,7 @@ package io.github.cottonmc.mcdict.api;
 
 import blue.endless.jankson.Jankson;
 import io.github.cottonmc.mcdict.MCDict;
+import io.github.cottonmc.mcdict.StaticDictLoader;
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityType;
 import net.minecraft.fluid.Fluid;
@@ -19,23 +20,23 @@ import java.util.function.Function;
 import java.util.function.Supplier;
 
 public class DictManager {
-	public static final DictManager DATA_PACK = new DictManager();
-//	public static final DictManager STATIC_DATA = new DictManager(); //TODO: NYI
-
 	public static final Map<String, DictInfo<?>> DICT_TYPES = new HashMap<>();
 	public static final List<Function<Jankson.Builder, Jankson.Builder>> FACTORIES = new ArrayList<>();
+
+	public static final DictManager DATA_PACK = new DictManager();
+	public static final DictManager STATIC_DATA = new DictManager();
 
 	public Map<String, Map<Identifier, Dict<?, ?>>> dicts = new HashMap<>();
 
 	private DictManager() {
-		registerDictType("blocks", Registry.BLOCK, BlockTags::getContainer);
-		registerDictType("items", Registry.ITEM, ItemTags::getContainer);
-		registerDictType("fluids", Registry.FLUID, FluidTags::getContainer);
-		registerDictType("entity_types", Registry.ENTITY_TYPE, EntityTypeTags::getContainer);
+		innerRegisterDictType("blocks", Registry.BLOCK, BlockTags::getContainer);
+		innerRegisterDictType("items", Registry.ITEM, ItemTags::getContainer);
+		innerRegisterDictType("fluids", Registry.FLUID, FluidTags::getContainer);
+		innerRegisterDictType("entity_types", Registry.ENTITY_TYPE, EntityTypeTags::getContainer);
 	}
 
 	/**
-	 * Register a new type of dict. based on a class of registered object.
+	 * Register a new type of dict, based on a class of registered object.
 	 * @param subfolder The subfolder in the `dicts` folder this type will belong to.
 	 * @param registry The registry which entries in this dict type are registered to.
 	 * @param tagContainer The tag container which tags for entries in this dict type are stored in.
@@ -44,10 +45,15 @@ public class DictManager {
 	public static <T> void registerDictType(String subfolder, Registry<T> registry, Supplier<TagContainer<T>> tagContainer) {
 		if (DICT_TYPES.containsKey(subfolder)) {
 			MCDict.logger.error("[MCDict] Could not register dict type {} as it already exists", subfolder);
+			return;
 		}
-		DATA_PACK.dicts.put(subfolder, new HashMap<>());
-//		STATIC_DATA.dicts.put(subfolder, new HashMap<>());
-		DICT_TYPES.put(subfolder, new DictInfo<>(registry, tagContainer));
+		DATA_PACK.innerRegisterDictType(subfolder, registry, tagContainer);
+		STATIC_DATA.innerRegisterDictType(subfolder, registry, tagContainer);
+	}
+
+	private <T> void innerRegisterDictType(String subfolder, Registry<T> registry, Supplier<TagContainer<T>> tagContainer) {
+		dicts.put(subfolder, new HashMap<>());
+		DICT_TYPES.putIfAbsent(subfolder, new DictInfo<>(registry, tagContainer));
 	}
 
 	/**
