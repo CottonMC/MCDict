@@ -13,6 +13,7 @@ import java.util.Random;
  * Data-driven key-value storage.
  * @param <T> The type of registered object to store a value for.
  * @param <V> The type of value to store.
+ * TODO: Is having this an interface actually worth it? No way for third parties to add their own subclasses...
  */
 public interface Dict<T, V> {
 	/**

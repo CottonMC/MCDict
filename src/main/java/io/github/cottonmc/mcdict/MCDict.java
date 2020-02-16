@@ -16,7 +16,6 @@ public class MCDict implements ModInitializer {
 
 	public static final Logger logger = LogManager.getLogger();
 
-
 	@Override
 	public void onInitialize() {
 		List<DictInitializer> entrypoints = FabricLoader.getInstance().getEntrypoints("mcdict", DictInitializer.class);
