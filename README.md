@@ -21,6 +21,6 @@ MCDict adds a data-driven system for loading key-value pairs in Minecraft data p
 }
 ```
 
-The `"replace"` tag works identical to `"replace"` in tags; if true, then this dict will delete existing values loaded from other docts. If the `"override"` tag is true, then entries from higher-priority dicts will overwrite the values for entries in lower-priority dicts.
+The `"replace"` tag works identical to `"replace"` in tags; if true, then this dict will delete existing values loaded from other dicts. If the `"override"` tag is true, then entries from higher-priority dicts will overwrite the values for entries in lower-priority dicts.
 
 Information on registering new dicts will be added when I have time.
