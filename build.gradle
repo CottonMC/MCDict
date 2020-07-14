@@ -7,7 +7,7 @@ buildscript {
 		}
 	}
 	dependencies {
-		classpath "net.fabricmc:fabric-loom:0.2.6-SNAPSHOT"
+		classpath "net.fabricmc:fabric-loom:0.4-SNAPSHOT"
 	}
 }
 
@@ -48,11 +48,11 @@ dependencies {
 	modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 	compileOnly "com.google.code.findbugs:jsr305:3.0.2"
 
-	modImplementation "io.github.cottonmc:StaticData:${project.static_data_version}"
+	//modImplementation "io.github.cottonmc:StaticData:${project.static_data_version}"
 	modImplementation "io.github.cottonmc:Jankson-Fabric:${project.jankson_version}"
 
-	include "io.github.cottonmc:StaticData:${project.static_data_version}"
-	include "io.github.cottonmc:Jankson-Fabric:${project.jankson_version}"
+	//include "io.github.cottonmc:StaticData:${project.static_data_version}"
+	//include "io.github.cottonmc:Jankson-Fabric:${project.jankson_version}"
 }
 
 processResources {

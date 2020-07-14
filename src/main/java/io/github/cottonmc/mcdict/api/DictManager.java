@@ -2,7 +2,6 @@ package io.github.cottonmc.mcdict.api;
 
 import blue.endless.jankson.Jankson;
 import io.github.cottonmc.mcdict.MCDict;
-import io.github.cottonmc.mcdict.StaticDictLoader;
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityType;
 import net.minecraft.fluid.Fluid;
@@ -24,7 +23,6 @@ public class DictManager {
 	public static final List<Function<Jankson.Builder, Jankson.Builder>> FACTORIES = new ArrayList<>();
 
 	public static final DictManager DATA_PACK = new DictManager();
-	public static final DictManager STATIC_DATA = new DictManager();
 
 	public Map<String, Map<Identifier, Dict<?, ?>>> dicts = new HashMap<>();
 
@@ -48,7 +46,6 @@ public class DictManager {
 			return;
 		}
 		DATA_PACK.innerRegisterDictType(subfolder, registry, tagContainer);
-		STATIC_DATA.innerRegisterDictType(subfolder, registry, tagContainer);
 	}
 
 	private <T> void innerRegisterDictType(String subfolder, Registry<T> registry, Supplier<TagContainer<T>> tagContainer) {

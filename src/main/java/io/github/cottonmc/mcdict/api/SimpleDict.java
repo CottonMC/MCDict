@@ -70,8 +70,8 @@ public class SimpleDict<T, V> implements Dict<T, V> {
 
 	@Override
 	public Tag<T> toTag() {
-		Identifier newId = new Identifier(id.getNamespace(), "dict/" + id.getPath());
-		return new Tag<>(newId, Collections.singleton(new Tag.CollectionEntry<>(values().keySet())), false);
+		//Identifier newId = new Identifier(id.getNamespace(), "dict/" + id.getPath());
+		return Tag.of(values().keySet());
 	}
 
 	//TODO: libcd condition support?
