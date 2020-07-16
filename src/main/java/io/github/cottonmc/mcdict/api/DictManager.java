@@ -23,6 +23,7 @@ public class DictManager {
 	public static final List<Function<Jankson.Builder, Jankson.Builder>> FACTORIES = new ArrayList<>();
 
 	public static final DictManager DATA_PACK = new DictManager();
+	public static final DictManager STATIC_DATA = new DictManager();
 
 	public Map<String, Map<Identifier, Dict<?, ?>>> dicts = new HashMap<>();
 
@@ -46,6 +47,7 @@ public class DictManager {
 			return;
 		}
 		DATA_PACK.innerRegisterDictType(subfolder, registry, tagContainer);
+		STATIC_DATA.innerRegisterDictType(subfolder, registry, tagContainer);
 	}
 
 	private <T> void innerRegisterDictType(String subfolder, Registry<T> registry, Supplier<TagContainer<T>> tagContainer) {

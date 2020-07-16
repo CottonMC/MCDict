@@ -16,9 +16,10 @@
     ]
   },
   "depends": {
-    "fabricloader": ">=0.4.0",
+    "fabricloader": ">=0.9.0",
     "fabric": "*",
-    "jankson": "*"
+    "jankson": "*",
+    "staticdata": "*"
   },
   "custom": {
     "modmenu:api": true

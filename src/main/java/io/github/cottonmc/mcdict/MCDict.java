@@ -21,5 +21,6 @@ public class MCDict implements ModInitializer {
 		entrypoints.forEach(DictInitializer::initDictTypes);
 		entrypoints.forEach(DictInitializer::registerDicts);
 		ResourceManagerHelper.get(ResourceType.SERVER_DATA).registerReloadListener(new PackDictLoader());
+		StaticDictLoader.load();
 	}
 }
