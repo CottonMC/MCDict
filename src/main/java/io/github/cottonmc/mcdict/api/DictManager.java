@@ -2,6 +2,7 @@ package io.github.cottonmc.mcdict.api;
 
 import blue.endless.jankson.Jankson;
 import io.github.cottonmc.mcdict.MCDict;
+import net.fabricmc.fabric.mixin.tag.extension.AccessorFluidTags;
 import net.minecraft.block.Block;
 import net.minecraft.entity.EntityType;
 import net.minecraft.fluid.Fluid;
@@ -28,31 +29,31 @@ public class DictManager {
 	public Map<String, Map<Identifier, Dict<?, ?>>> dicts = new HashMap<>();
 
 	private DictManager() {
-		innerRegisterDictType("blocks", Registry.BLOCK, BlockTags::getContainer);
-		innerRegisterDictType("items", Registry.ITEM, ItemTags::getContainer);
-		innerRegisterDictType("fluids", Registry.FLUID, FluidTags::getContainer);
-		innerRegisterDictType("entity_types", Registry.ENTITY_TYPE, EntityTypeTags::getContainer);
+		innerRegisterDictType("blocks", Registry.BLOCK, BlockTags::getTagGroup);
+		innerRegisterDictType("items", Registry.ITEM, ItemTags::getTagGroup);
+		innerRegisterDictType("fluids", Registry.FLUID, AccessorFluidTags.getRequiredTags()::getGroup);
+		innerRegisterDictType("entity_types", Registry.ENTITY_TYPE, EntityTypeTags::getTagGroup);
 	}
 
 	/**
 	 * Register a new type of dict, based on a class of registered object.
 	 * @param subfolder The subfolder in the `dicts` folder this type will belong to.
 	 * @param registry The registry which entries in this dict type are registered to.
-	 * @param tagContainer The tag container which tags for entries in this dict type are stored in.
+	 * @param tagGroup The tag group which tags for entries in this dict type are stored in.
 	 * @param <T> The type of registered object this dict will support.
 	 */
-	public static <T> void registerDictType(String subfolder, Registry<T> registry, Supplier<TagContainer<T>> tagContainer) {
+	public static <T> void registerDictType(String subfolder, Registry<T> registry, Supplier<TagGroup<T>> tagGroup) {
 		if (DICT_TYPES.containsKey(subfolder)) {
 			MCDict.logger.error("[MCDict] Could not register dict type {} as it already exists", subfolder);
 			return;
 		}
-		DATA_PACK.innerRegisterDictType(subfolder, registry, tagContainer);
-		STATIC_DATA.innerRegisterDictType(subfolder, registry, tagContainer);
+		DATA_PACK.innerRegisterDictType(subfolder, registry, tagGroup);
+		STATIC_DATA.innerRegisterDictType(subfolder, registry, tagGroup);
 	}
 
-	private <T> void innerRegisterDictType(String subfolder, Registry<T> registry, Supplier<TagContainer<T>> tagContainer) {
+	private <T> void innerRegisterDictType(String subfolder, Registry<T> registry, Supplier<TagGroup<T>> tagGroup) {
 		dicts.put(subfolder, new HashMap<>());
-		DICT_TYPES.putIfAbsent(subfolder, new DictInfo<>(registry, tagContainer));
+		DICT_TYPES.putIfAbsent(subfolder, new DictInfo<>(registry, tagGroup));
 	}
 
 	/**
@@ -83,11 +84,11 @@ public class DictManager {
 			}
 			//TODO: more fastutil-like dict types? is it even worth it? It gets cast right back to a Dict anyway...
 			if (valueType == Integer.class) {
-				IntDict<T> ret = new IntDict<>(id, info.registry, info.container);
+				IntDict<T> ret = new IntDict<>(id, info.registry, info.group);
 				dicts.get(type).put(id, ret);
 				return (Dict<T, V>) ret;
 			} else {
-				SimpleDict<T, V> ret = new SimpleDict<>(id, valueType, info.registry, info.container);
+				SimpleDict<T, V> ret = new SimpleDict<>(id, valueType, info.registry, info.group);
 				dicts.get(type).put(id, ret);
 				return ret;
 			}
@@ -181,16 +182,16 @@ public class DictManager {
 	}
 
 	/**
-	 * Internal helper class for storing the required registries and tag containers for dicts, since a Pair<Registry<T>, Supplier<TagContainer<T>>> is a very bad idea
+	 * Internal helper class for storing the required registries and tag groups for dicts, since a Pair<Registry<T>, Supplier<TagGroup<T>>> is a very bad idea
 	 * @param <T> The type of registered object this DictInfo is for.
 	 */
 	private static class DictInfo<T> {
 		private Registry<T> registry;
-		private Supplier<TagContainer<T>> container;
+		private Supplier<TagGroup<T>> group;
 
-		private DictInfo(Registry<T> registry, Supplier<TagContainer<T>> container) {
+		private DictInfo(Registry<T> registry, Supplier<TagGroup<T>> group) {
 			this.registry = registry;
-			this.container = container;
+			this.group = group;
 		}
 	}
 }
