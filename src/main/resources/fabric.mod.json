@@ -2,7 +2,6 @@
   "schemaVersion": 1,
   "id": "mcdict",
   "version": "${version}",
-
   "name": "MCDict",
   "icon": "assets/mcdict/icon.png",
   "description": "Data-driven key/value storage for Minecraft",
@@ -17,7 +16,7 @@
     ]
   },
   "depends": {
-    "fabricloader": ">=0.4.0",
+    "fabricloader": ">=0.9.0",
     "fabric": "*",
     "jankson": "*",
     "staticdata": "*"

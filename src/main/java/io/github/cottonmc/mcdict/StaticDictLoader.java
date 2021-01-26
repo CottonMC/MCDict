@@ -77,14 +77,14 @@ public class StaticDictLoader {
 			}
 		}
 
-		Path globalStaticDataFolder = new File(FabricLoader.getInstance().getGameDirectory(), "static_data").toPath();
+		Path globalStaticDataFolder = FabricLoader.getInstance().getGameDir().resolve("static_data/");
 		if (Files.isDirectory(globalStaticDataFolder)) {
 			Path contentdir = globalStaticDataFolder.resolve("content/");
 			if (Files.isDirectory(contentdir)) {
 				try (Stream<Path> namespaces = Files.walk(contentdir, 1)) {
 					namespaces.forEach((namespace) -> {
 						if (namespace.equals(contentdir)) return;
-						String name = namespace.toString().substring(namespace.toString().lastIndexOf('/') + 1);
+						String name = namespace.toString().substring(namespace.toString().replaceAll("\\\\", "/").lastIndexOf('/') + 1);
 						Path datadir = namespace.resolve(dirname);
 						if (Files.isDirectory(datadir)) {
 							try (Stream<Path> files = Files.walk(datadir)) {
